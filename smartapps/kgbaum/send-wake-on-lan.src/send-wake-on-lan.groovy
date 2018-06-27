@@ -12,14 +12,14 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	This smart app sends a Wake-On-Lan packet when the associated switch is turned on.  A virtual device switch
- *	can first be created for use with the app.
+ *	This smart app adds a virtual switch that sends a Wake-On-Lan packet when pushed.  Note that the uninstall does
+ *	not work as expected, first delete the virtual switch that was added, then uninstall the app.
  */
 definition(
     name: "Send Wake-On-Lan",
     namespace: "kgbaum",
     author: "Karl Baum",
-    description: "Turns on computer using Wake-On-Lan",
+    description: "Adds a virtual push button that sends a Wake-On-Lan packet.",
     category: "My Apps",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
@@ -28,11 +28,11 @@ definition(
 
 
 preferences {
-	section("Switch used for turning on PC:") {
-    	input "theSwitch", "capability.switch", required: true
+	section("Button Name:") {
+    	input "buttonName", "text", title: "Enter a friendly name", required: true
     }
-	section("PC MAC Address:") {
-		input "mac", "text", required: true
+	section("Device MAC Address:") {
+		input "mac", "text", title: "MAC Address without :", required: true
 	}
 }
 
@@ -50,12 +50,35 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(theSwitch, "switch.on", switchOnHandler)
+    def buttonLabel = "${settings.buttonName}"
+    def deviceId = "SWON_${app.id}"
+    log.debug "child momentary button tile -  Label:${buttonLabel}, Name :${deviceId}"
+    
+    def newDevice = getChildDevice(deviceId)
+    if (!newDevice) {
+    	log.debug "child does not exist, creating"
+		newDevice = addChildDevice("smartthings", "Momentary Button Tile", deviceId, null, [name:deviceId, label:buttonLabel, completedSetup: true])
+    }
+    else {
+    	log.debug "child exists, skipping creation"
+    }
+
+    subscribe(newDevice, "momentary.pushed", switchPushHandler)
 }
 
-def switchOnHandler(evt) {
+def uninstalled() {
+	log.debug "uninstalled called"
+    // Removal of child device does not seem to work.  It must be manually uninstalled.
+    //log.debug "unsubscribing from device events"
+    //unsubscribe()
+    //log.debug "deleting children"
+    //getChildDevices().each {
+    //   runIn(10, deleteChildDevice(it.deviceNetworkId))
+    //}
+}
+
+def switchPushHandler(evt) {
 	log.debug "switchOnHandler called: $evt"
-    sendHubCommand(myWOLCommand())
     sendHubCommand(myWOLCommand())
 }
 
