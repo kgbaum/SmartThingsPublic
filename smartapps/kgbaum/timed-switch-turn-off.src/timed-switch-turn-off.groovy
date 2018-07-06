@@ -52,5 +52,9 @@ def initialize() {
 
 def switchOnHandler(evt) {
 	log.debug "switchOnHandler called: $evt"
-    theSwitch.off([delay: (60*1000*timeLimit)])
+    runIn(60*timeLimit, shutOff)
+}
+
+def shutOff() {
+	theSwitch.off()
 }
