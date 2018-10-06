@@ -56,8 +56,8 @@ private initialize() {
 }
 
 def parse(String description) {
-	def pair = description.split(":")
-	createEvent(name: pair[0].trim(), value: pair[1].trim())
+	//def pair = description.split(":")
+	//createEvent(name: pair[0].trim(), value: pair[1].trim())
 }
 
 def open() {
